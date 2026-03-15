@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPOS · جمعية البيئة بحائل</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-mid:#97C459;--green-light:#C0DD97;
+  --yellow:#BA7517;--yellow-bg:#FAEEDA;--yellow-light:#FAC775;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-light:#F7C1C1;
+  --teal:#0F6E56;--teal-bg:#E1F5EE;--teal-mid:#1D9E75;--teal-light:#9FE1CB;
+  --blue:#185FA5;--blue-bg:#E6F1FB;
+  --g1:#F1EFE8;--g2:#D3D1C7;--g3:#888780;--gdark:#2C2C2A;
+  --tx:#1a1a18;--tx2:#5F5E5A;--tx3:#888780;
+  --bg:#f5f4f0;--bgc:#ffffff;--bdr:rgba(0,0,0,0.1);
+  --sw:230px;--r:12px;--rs:8px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --tx:#f0ede6;--tx2:#b4b2a9;--tx3:#888780;
+  --bg:#1a1918;--bgc:#242320;--bdr:rgba(255,255,255,0.08);
+  --g1:#2a2927;--gdark:#f0ede6;
+}}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+.sidebar{position:fixed;right:0;top:0;height:100vh;width:var(--sw);background:var(--gdark);display:flex;flex-direction:column;z-index:200;overflow-y:auto;}
+.sl{padding:22px 18px 18px;border-bottom:0.5px solid rgba(255,255,255,0.08);}
+.sl .org{font-size:14px;font-weight:500;color:#fff;line-height:1.5;}
+.sl .sys{font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;}
+.ns{padding:14px 0 6px;}
+.nl{font-size:10px;color:rgba(255,255,255,0.3);padding:4px 18px 6px;letter-spacing:.8px;}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.55);transition:all .15s;border-right:3px solid transparent;user-select:none;}
+.ni:hover{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.85);}
+.ni.active{background:rgba(29,158,117,0.12);color:#5DCAA5;border-right-color:#5DCAA5;}
+.ni-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.sf{margin-top:auto;padding:16px 18px;border-top:0.5px solid rgba(255,255,255,0.07);}
+.sf .role{font-size:11px;color:rgba(255,255,255,0.5);}
+.sf .ver{font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px;}
+.main{margin-right:var(--sw);padding:28px 28px 60px;min-height:100vh;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.topbar h1{font-size:20px;font-weight:500;color:var(--tx);}
+.view{display:none;}.view.active{display:block;}
+.ysel{background:var(--bgc);border:0.5px solid var(--bdr);border-radius:var(--rs);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--tx);outline:none;}
+.btn-p{background:var(--teal-mid);color:#fff;border:none;border-radius:var(--rs);padding:9px 18px;font-size:13px;cursor:pointer;font-weight:500;font-family:inherit;transition:background .15s;white-space:nowrap;}
+.btn-p:hover{background:var(--teal);}
+.btn-o{background:transparent;color:var(--tx2);border:0.5px solid var(--bdr);border-radius:var(--rs);padding:9px 18px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap;}
+.btn-o:hover{background:var(--g1);}
+.btn-del{background:transparent;color:var(--red);border:0.5px solid var(--red-light);border-radius:var(--rs);padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+.btn-del:hover{background:var(--red-bg);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.score-banner{background:var(--teal-bg);border:0.5px solid var(--teal-light);border-radius:var(--r);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.sc-lbl{font-size:12px;color:var(--teal);font-weight:500;margin-bottom:6px;}
+.sc-val{font-size:44px;font-weight:500;color:var(--teal);line-height:1;}
+.sc-sub{font-size:12px;color:var(--teal);opacity:.65;margin-top:5px;}
+.axes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:24px;}
+.axis-card{background:var(--bgc);border:0.5px solid var(--bdr);border-radius:var(--r);padding:16px;cursor:pointer;transition:transform .12s;border-top:3px solid transparent;}
+.axis-card:hover{transform:translateY(-2px);}
+.axis-card.cg{border-top-color:var(--green-mid);}.axis-card.cy{border-top-color:var(--yellow-light);}.axis-card.cr{border-top-color:var(--red-light);}
+.at{font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5;min-height:36px;}
+.as{font-size:26px;font-weight:500;margin-bottom:8px;}
+.as.green{color:var(--green);}.as.yellow{color:var(--yellow);}.as.red{color:var(--red);}
+.pb{height:4px;background:var(--g1);border-radius:2px;overflow:hidden;margin-bottom:10px;}
+.pf{height:100%;border-radius:2px;}
+.pf.green{background:var(--green-light);}.pf.yellow{background:var(--yellow-light);}.pf.red{background:var(--red-light);}
+.af{display:flex;justify-content:space-between;align-items:flex-end;}
+.mbars{display:flex;align-items:flex-end;gap:3px;height:28px;}
+.mbar{width:8px;border-radius:2px 2px 0 0;}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:500;}
+.badge.green{background:var(--green-bg);color:var(--green);}
+.badge.yellow{background:var(--yellow-bg);color:var(--yellow);}
+.badge.red{background:var(--red-bg);color:var(--red);}
+.badge.teal{background:var(--teal-bg);color:var(--teal);}
+.badge.blue{background:var(--blue-bg);color:var(--blue);}
+.badge.gray{background:var(--g1);color:var(--tx2);}
+.sec-title{font-size:13px;font-weight:500;color:var(--tx2);margin-bottom:10px;}
+.ktable{background:var(--bgc);border:0.5px solid var(--bdr);border-radius:var(--r);overflow:hidden;}
+.khdr{display:grid;grid-template-columns:1fr 80px 80px 80px 80px 44px;padding:10px 16px;background:var(--g1);font-size:11px;font-weight:500;color:var(--tx2);}
+.krow{display:grid;grid-template-columns:1fr 80px 80px 80px 80px 44px;padding:11px 16px;border-top:0.5px solid var(--bdr);font-size:13px;align-items:center;}
+.krow:hover{background:var(--g1);}
+.kc{text-align:center;color:var(--tx2);}
+.kn{color:var(--tx);}
+.kpct{text-align:center;font-weight:500;}
+.kpct.green{color:var(--green);}.kpct.yellow{color:var(--yellow);}.kpct.red{color:var(--red);}
+.fcard{background:var(--bgc);border:0.5px solid var(--bdr);border-radius:var(--r);padding:22px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.frow{margin-bottom:16px;}
+.flbl{display:block;font-size:12px;color:var(--tx2);margin-bottom:6px;}
+.finp,.fsel,.ftxt{width:100%;background:var(--g1);border:0.5px solid var(--bdr);border-radius:var(--rs);padding:9px 12px;font-size:14px;color:var(--tx);font-family:inherit;outline:none;transition:border-color .15s;}
+.finp:focus,.fsel:focus,.ftxt:focus{border-color:var(--teal-mid);}
+.ftxt{resize:vertical;min-height:80px;}
+.eind{border:0.5px solid var(--bdr);border-radius:var(--rs);padding:14px;margin-bottom:10px;background:var(--g1);}
+.eind-n{font-size:13px;color:var(--tx);margin-bottom:5px;font-weight:500;}
+.eind-m{font-size:11px;color:var(--tx3);margin-bottom:8px;}
+.sec-box{background:var(--bgc);border:0.5px solid var(--bdr);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.sec-box-hd{font-size:14px;font-weight:500;color:var(--tx);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.ychip{display:inline-flex;align-items:center;gap:8px;background:var(--g1);border:0.5px solid var(--bdr);border-radius:var(--rs);padding:8px 14px;margin:4px;}
+.ychip .yv{font-size:14px;font-weight:500;color:var(--tx);}
+.ychip .ydel{background:none;border:none;cursor:pointer;color:var(--tx3);font-size:18px;line-height:1;padding:0 0 0 2px;}
+.ychip .ydel:hover{color:var(--red);}
+.ychip.cur{background:var(--teal-bg);border-color:var(--teal-light);}
+.ychip.cur .yv{color:var(--teal);}
+.ind-hdr{display:grid;grid-template-columns:1fr 110px 80px 80px 56px 60px;padding:10px 14px;background:var(--g1);font-size:11px;font-weight:500;color:var(--tx2);border-radius:var(--rs) var(--rs) 0 0;}
+.ind-row{display:grid;grid-template-columns:1fr 110px 80px 80px 56px 60px;padding:11px 14px;border-top:0.5px solid var(--bdr);font-size:13px;align-items:center;}
+.ind-row:hover{background:var(--g1);}
+.def-tag{font-size:10px;background:var(--g1);color:var(--tx3);padding:1px 6px;border-radius:6px;margin-right:6px;border:0.5px solid var(--bdr);}
+.rgen{background:var(--teal-bg);border:0.5px solid var(--teal-light);border-radius:var(--r);padding:20px;margin-bottom:20px;max-width:560px;}
+.ritem{background:var(--bgc);border:0.5px solid var(--bdr);border-radius:var(--r);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;max-width:560px;}
+.ritem .t{font-size:14px;font-weight:500;color:var(--tx);}
+.ritem .s{font-size:12px;color:var(--tx2);margin-top:3px;}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal-ov.open{display:flex;}
+.modal{background:var(--bgc);border-radius:var(--r);padding:24px;width:100%;max-width:480px;border:0.5px solid var(--bdr);}
+.modal-title{font-size:16px;font-weight:500;color:var(--tx);margin-bottom:18px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gdark);color:#fff;padding:11px 22px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;}
+.mob-bar{display:none;background:var(--gdark);padding:14px 18px;position:sticky;top:0;z-index:150;align-items:center;justify-content:space-between;}
+.ham{background:none;border:none;cursor:pointer;color:#fff;font-size:20px;line-height:1;}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:190;}
+@media(max-width:700px){
+  .sidebar{transform:translateX(100%);transition:transform .25s;}
+  .sidebar.open{transform:translateX(0);}
+  .ov.show{display:block;}
+  .mob-bar{display:flex;}
+  .main{margin-right:0;padding:16px 14px 60px;}
+  .fgrid{grid-template-columns:1fr;}
+  .khdr,.krow{grid-template-columns:1fr 70px 70px 60px 36px;}
+  .khdr>*:nth-child(3),.krow>*:nth-child(3){display:none;}
+  .ind-hdr,.ind-row{grid-template-columns:1fr 80px 60px 56px;}
+  .ind-hdr>*:nth-child(2),.ind-hdr>*:nth-child(4),.ind-row>*:nth-child(2),.ind-row>*:nth-child(4){display:none;}
+}
+@media(max-width:420px){.axes-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="ov" id="ov" onclick="closeSidebar()"></div>
+<div class="mob-bar">
+  <div style="font-size:14px;color:#fff;font-weight:500;">جمعية البيئة بحائل</div>
+  <button class="ham" onclick="toggleSidebar()">☰</button>
+</div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sl">
+    <div class="org">جمعية البيئة بحائل</div>
+    <div class="sys">EPOS · نظام قياس الأداء</div>
+  </div>
+  <div class="ns">
+    <div class="nl">الرئيسية</div>
+    <div class="ni active" id="nav-dashboard" onclick="nav('dashboard',this)"><span class="ni-ic">◉</span> لوحة التحكم</div>
+  </div>
+  <div class="ns">
+    <div class="nl">البيانات</div>
+    <div class="ni" id="nav-entry" onclick="nav('entry',this)"><span class="ni-ic">✎</span> إدخال البيانات</div>
+    <div class="ni" id="nav-axes" onclick="nav('axes',this)"><span class="ni-ic">◈</span> المحاور والمؤشرات</div>
+  </div>
+  <div class="ns">
+    <div class="nl">التقارير</div>
+    <div class="ni" id="nav-reports" onclick="nav('reports',this)"><span class="ni-ic">⊞</span> التقارير</div>
+  </div>
+  <div class="ns">
+    <div class="nl">الإدارة</div>
+    <div class="ni" id="nav-settings" onclick="nav('settings',this)"><span class="ni-ic">⚙</span> الإعدادات</div>
+  </div>
+  <div class="sf">
+    <div class="role">مدير النظام · Admin</div>
+    <div class="ver">EPOS v1.1 · 2025</div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div id="view-dashboard" class="view active">
+    <div class="topbar">
+      <h1>لوحة التحكم الرئيسية</h1>
+      <select class="ysel" id="dash-year" onchange="renderDashboard()"></select>
+    </div>
+    <div class="score-banner">
+      <div>
+        <div class="sc-lbl">الأداء الكلي للجمعية</div>
+        <div class="sc-val" id="overall-pct">--</div>
+        <div class="sc-sub" id="overall-sub">--</div>
+      </div>
+      <canvas id="donut" width="90" height="90"></canvas>
+    </div>
+    <div class="axes-grid" id="axes-grid"></div>
+    <div class="sec-title">جميع المؤشرات</div>
+    <div class="ktable">
+      <div class="khdr"><div>المؤشر</div><div class="kc">النوع</div><div class="kc">الهدف</div><div class="kc">الفعلي</div><div class="kc">التحقق</div><div></div></div>
+      <div id="kpi-rows"></div>
+    </div>
+  </div>
+
+  <!-- DATA ENTRY -->
+  <div id="view-entry" class="view">
+    <div class="topbar"><h1>إدخال البيانات</h1></div>
+    <div class="fcard" style="max-width:620px;">
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div><label class="flbl">السنة</label><select class="fsel" id="entry-year"></select></div>
+        <div><label class="flbl">الربع</label>
+          <select class="fsel" id="entry-quarter">
+            <option>الربع الأول (Q1)</option><option>الربع الثاني (Q2)</option>
+            <option selected>الربع الثالث (Q3)</option><option>الربع الرابع (Q4)</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <label class="flbl">المحور</label>
+        <select class="fsel" id="entry-axis" onchange="loadEntryFields()">
+          <option value="0">البرامج البيئية التطبيقية ذات الأثر</option>
+          <option value="1">البناء المؤسسي والحوكمة التشغيلية</option>
+          <option value="2">الاستدامة المالية وبناء الشراكات</option>
+          <option value="3">المشاركة المجتمعية وقياس الأثر</option>
+          <option value="4">مؤشرات مستوى الكيان</option>
+        </select>
+      </div>
+      <div id="entry-fields" style="margin-bottom:14px;"></div>
+      <div class="frow"><label class="flbl">ملاحظات (اختياري)</label><textarea class="ftxt" placeholder="أضف أي ملاحظات..."></textarea></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-p" onclick="saveEntry()">حفظ البيانات</button>
+        <button class="btn-o" onclick="loadEntryFields()">إعادة تعيين</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AXES -->
+  <div id="view-axes" class="view">
+    <div class="topbar"><h1>المحاور والمؤشرات</h1></div>
+    <div id="axes-detail"></div>
+  </div>
+
+  <!-- REPORTS -->
+  <div id="view-reports" class="view">
+    <div class="topbar"><h1>التقارير</h1></div>
+    <div class="rgen">
+      <div style="font-size:14px;font-weight:500;color:var(--teal);margin-bottom:14px;">إنشاء تقرير جديد</div>
+      <div class="fgrid" style="margin-bottom:14px;">
+        <div><label class="flbl">السنة</label><select class="fsel" id="report-year"></select></div>
+        <div><label class="flbl">نوع التقرير</label>
+          <select class="fsel"><option>تقرير تنفيذي شامل</option><option>ملخص المجلس</option><option>تقرير محور محدد</option></select>
+        </div>
+      </div>
+      <button class="btn-p" onclick="generateReport()">إنشاء وطباعة التقرير</button>
+    </div>
+    <div class="sec-title">التقارير السابقة</div>
+    <div id="reports-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="view-settings" class="view">
+    <div class="topbar"><h1>الإعدادات والإدارة</h1></div>
+    <div style="max-width:760px;">
+
+      <!-- YEARS -->
+      <div class="sec-box">
+        <div class="sec-box-hd">
+          <div>
+            <div>إدارة السنوات</div>
+            <div style="font-size:12px;font-weight:400;color:var(--tx3);margin-top:2px;">إضافة أو حذف السنوات في النظام</div>
+          </div>
+          <button class="btn-p btn-sm" onclick="openAddYear()">+ إضافة سنة</button>
+        </div>
+        <div id="years-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:12px;padding-top:12px;border-top:0.5px solid var(--bdr);">السنة الحالية لا يمكن حذفها · حذف السنة لا يمسح البيانات المدخلة</div>
+      </div>
+
+      <!-- INDICATORS -->
+      <div class="sec-box">
+        <div class="sec-box-hd">
+          <div>
+            <div>إدارة المؤشرات</div>
+            <div style="font-size:12px;font-weight:400;color:var(--tx3);margin-top:2px;">إضافة مؤشرات جديدة أو حذف المؤشرات المضافة</div>
+          </div>
+          <button class="btn-p btn-sm" onclick="openAddIndicator()">+ إضافة مؤشر</button>
+        </div>
+        <div class="frow" style="margin-bottom:14px;">
+          <label class="flbl">تصفية حسب المحور</label>
+          <select class="fsel" id="ind-filter" onchange="renderIndManager()" style="max-width:360px;">
+            <option value="-1">جميع المحاور</option>
+            <option value="0">البرامج البيئية التطبيقية ذات الأثر</option>
+            <option value="1">البناء المؤسسي والحوكمة التشغيلية</option>
+            <option value="2">الاستدامة المالية وبناء الشراكات</option>
+            <option value="3">المشاركة المجتمعية وقياس الأثر</option>
+            <option value="4">مؤشرات مستوى الكيان</option>
+          </select>
+        </div>
+        <div class="ktable" id="ind-table">
+          <div class="ind-hdr"><div>المؤشر</div><div class="kc">المحور</div><div class="kc">النوع</div><div class="kc">الهدف</div><div class="kc">حالة</div><div class="kc">إجراء</div></div>
+          <div id="ind-rows"></div>
+        </div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:10px;">🔒 المؤشرات الافتراضية محمية ولا يمكن حذفها · يمكن حذف المؤشرات المضافة فقط</div>
+      </div>
+
+      <!-- GENERAL -->
+      <div class="sec-box">
+        <div class="sec-box-hd">الإعدادات العامة</div>
+        <div class="frow"><label class="flbl">اسم المنظمة</label><input class="finp" type="text" value="جمعية البيئة بحائل" style="max-width:380px;"></div>
+        <div class="fgrid" style="max-width:380px;">
+          <div><label class="flbl">السنة الحالية</label><select class="fsel" id="cur-year-sel" onchange="setCurYear(this.value)"></select></div>
+          <div><label class="flbl">الربع الحالي</label><select class="fsel"><option>Q1</option><option>Q2</option><option selected>Q3</option><option>Q4</option></select></div>
+        </div>
+        <div style="margin-top:16px;"><button class="btn-p" onclick="toast('تم حفظ الإعدادات ✓')">حفظ الإعدادات</button></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL: Add Year -->
+<div class="modal-ov" id="modal-year">
+  <div class="modal">
+    <div class="modal-title">إضافة سنة جديدة</div>
+    <div class="frow">
+      <label class="flbl">السنة</label>
+      <input class="finp" type="number" id="new-year-val" placeholder="مثال: 2026" min="2000" max="2050">
+    </div>
+    <div class="frow">
+      <label class="flbl">نسخ الأهداف من سنة سابقة (اختياري)</label>
+      <select class="fsel" id="new-year-copy"><option value="">بدون نسخ — سنة فارغة</option></select>
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:-8px;">نسخ الأهداف يساعدك كنقطة انطلاق للتخطيط</div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-year')">إلغاء</button>
+      <button class="btn-p" onclick="confirmAddYear()">إضافة السنة</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Indicator -->
+<div class="modal-ov" id="modal-ind">
+  <div class="modal">
+    <div class="modal-title">إضافة مؤشر جديد</div>
+    <div class="frow"><label class="flbl">اسم المؤشر *</label><input class="finp" type="text" id="ni-name" placeholder="اسم المؤشر..."></div>
+    <div class="fgrid">
+      <div class="frow"><label class="flbl">المحور *</label>
+        <select class="fsel" id="ni-axis">
+          <option value="0">البرامج البيئية التطبيقية ذات الأثر</option>
+          <option value="1">البناء المؤسسي والحوكمة التشغيلية</option>
+          <option value="2">الاستدامة المالية وبناء الشراكات</option>
+          <option value="3">المشاركة المجتمعية وقياس الأثر</option>
+          <option value="4">مؤشرات مستوى الكيان</option>
+        </select>
+      </div>
+      <div class="frow"><label class="flbl">النوع *</label>
+        <select class="fsel" id="ni-type"><option value="أداء">أداء · Performance</option><option value="نتيجة">نتيجة · Outcome</option></select>
+      </div>
+    </div>
+    <div class="fgrid">
+      <div class="frow"><label class="flbl">الهدف السنوي *</label><input class="finp" type="number" id="ni-target" placeholder="0" min="0"></div>
+      <div class="frow"><label class="flbl">الوحدة</label><input class="finp" type="text" id="ni-unit" placeholder="مثال: % أو ر.س"></div>
+    </div>
+    <div class="frow"><label class="flbl">وصف مختصر (اختياري)</label><textarea class="ftxt" id="ni-desc" placeholder="..." style="min-height:56px;"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-ind')">إلغاء</button>
+      <button class="btn-p" onclick="confirmAddIndicator()">إضافة المؤشر</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirm -->
+<div class="modal-ov" id="modal-confirm">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title" id="confirm-title">تأكيد</div>
+    <div style="font-size:14px;color:var(--tx2);" id="confirm-msg"></div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-confirm')">إلغاء</button>
+      <button class="btn-del" style="padding:9px 18px;font-size:13px;" id="confirm-ok">حذف</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let YEARS = [2024, 2025];
+let CUR_YEAR = 2025;
+let nextId = 100;
+
+const AXES = [
+  {id:0,name:"البرامج البيئية التطبيقية ذات الأثر"},
+  {id:1,name:"البناء المؤسسي والحوكمة التشغيلية"},
+  {id:2,name:"الاستدامة المالية وبناء الشراكات"},
+  {id:3,name:"المشاركة المجتمعية وقياس الأثر"},
+  {id:4,name:"مؤشرات مستوى الكيان"}
+];
+
+let IND = [
+  {id:1, name:"عدد البرامج البيئية المنفذة",        axis:0, type:"أداء",   target:12,     actual:11,    unit:"",      def:true},
+  {id:2, name:"نسبة البرامج ذات الأثر الموثق",      axis:0, type:"نتيجة",  target:80,     actual:78,    unit:"%",     def:true},
+  {id:3, name:"عدد المتطوعين الفاعلين",              axis:0, type:"أداء",   target:150,    actual:162,   unit:"",      def:true},
+  {id:4, name:"عدد المواقع البيئية المستهدفة",       axis:0, type:"أداء",   target:8,      actual:7,     unit:"",      def:true},
+  {id:5, name:"نسبة تنفيذ الخطة التشغيلية",         axis:1, type:"أداء",   target:90,     actual:85,    unit:"%",     def:true},
+  {id:6, name:"عدد اجتماعات مجلس الإدارة",          axis:1, type:"أداء",   target:6,      actual:5,     unit:"",      def:true},
+  {id:7, name:"درجة الالتزام بمعايير الحوكمة",      axis:1, type:"نتيجة",  target:80,     actual:76,    unit:"%",     def:true},
+  {id:8, name:"عدد الشراكات المؤسسية الفعّالة",     axis:2, type:"أداء",   target:10,     actual:7,     unit:"",      def:true},
+  {id:9, name:"نسبة التنويع في مصادر التمويل",      axis:2, type:"نتيجة",  target:60,     actual:52,    unit:"%",     def:true},
+  {id:10,name:"حجم التمويل المحلي المستقطب",         axis:2, type:"أداء",   target:500000, actual:430000,unit:" ر.س", def:true},
+  {id:11,name:"عدد المستفيدين من الفعاليات",         axis:3, type:"نتيجة",  target:2000,   actual:1950,  unit:"",      def:true},
+  {id:12,name:"عدد الفعاليات المجتمعية المنظمة",    axis:3, type:"أداء",   target:15,     actual:16,    unit:"",      def:true},
+  {id:13,name:"مؤشر رضا المستفيدين",                axis:3, type:"نتيجة",  target:75,     actual:78,    unit:"%",     def:true},
+  {id:14,name:"عدد أعضاء الجمعية الفاعلين",         axis:4, type:"أداء",   target:200,    actual:180,   unit:"",      def:true},
+  {id:15,name:"مؤشر رضا العضوية",                   axis:4, type:"نتيجة",  target:75,     actual:68,    unit:"%",     def:true},
+  {id:16,name:"نسبة تحقيق الأهداف الاستراتيجية",   axis:4, type:"نتيجة",  target:80,     actual:70,    unit:"%",     def:true}
+];
+
+const RPTS = [
+  {title:"التقرير التنفيذي السنوي 2024",date:"15 يناير 2025",pages:8},
+  {title:"تقرير Q3 2025 للمجلس",date:"5 أكتوبر 2025",pages:5},
+  {title:"تقرير Q2 2025 للمجلس",date:"10 يوليو 2025",pages:5}
+];
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const gc=p=>p>=100?"green":p>=80?"yellow":"red";
+const gl=p=>p>=100?"ممتاز":p>=80?"جيد":"يحتاج متابعة";
+const fmt=v=>v>=10000?v.toLocaleString('ar'):v;
+const axScore=aid=>{const a=IND.filter(i=>i.axis===aid);if(!a.length)return 0;return Math.round(a.reduce((s,i)=>s+Math.round(i.actual/i.target*100),0)/a.length);};
+const shortAxis=id=>AXES[id]?.name.split(' ').slice(0,3).join(' ')+'...';
+
+function fillYearSels(){
+  const rev=[...YEARS].reverse();
+  ["dash-year","entry-year","report-year","cur-year-sel"].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const v=el.value||String(CUR_YEAR);
+    el.innerHTML=rev.map(y=>`<option value="${y}">${y}${y===CUR_YEAR?' (الحالية)':''}</option>`).join("");
+    el.value=YEARS.includes(+v)?v:String(CUR_YEAR);
+  });
+  const cp=document.getElementById("new-year-copy");
+  if(cp){cp.innerHTML=`<option value="">بدون نسخ — سنة فارغة</option>`+rev.map(y=>`<option value="${y}">${y}</option>`).join("");}
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+let donut=null;
+function renderDashboard(){
+  const sc=AXES.map(a=>axScore(a.id));
+  const ov=Math.round(sc.reduce((s,v)=>s+v,0)/sc.length);
+  document.getElementById("overall-pct").textContent=ov+"%";
+  document.getElementById("overall-sub").textContent="الربع الثالث · "+(document.getElementById("dash-year").value||CUR_YEAR);
+  if(donut)donut.destroy();
+  donut=new Chart(document.getElementById("donut").getContext("2d"),{
+    type:"doughnut",data:{datasets:[{data:[ov,100-ov],backgroundColor:["#1D9E75","#9FE1CB"],borderWidth:0}]},
+    options:{cutout:"72%",responsive:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  });
+  const clrs={green:"#C0DD97",yellow:"#FAC775",red:"#F7C1C1"};
+  document.getElementById("axes-grid").innerHTML=AXES.map(a=>{
+    const s=axScore(a.id),c=gc(s);
+    const bars=[Math.max(0,s-18),Math.max(0,s-9),Math.max(0,s-4),s].map(v=>`<div class="mbar" style="height:${Math.round(v/100*28)}px;background:${clrs[gc(v)]};"></div>`).join("");
+    return `<div class="axis-card c${c[0]}" onclick="openAxis(${a.id})">
+      <div class="at">${a.name}</div><div class="as ${c}">${s}%</div>
+      <div class="pb"><div class="pf ${c}" style="width:${Math.min(s,100)}%"></div></div>
+      <div class="af"><span class="badge ${c}">${gl(s)}</span><div class="mbars">${bars}</div></div>
+    </div>`;
+  }).join("");
+  document.getElementById("kpi-rows").innerHTML=IND.map(i=>{
+    const p=Math.round(i.actual/i.target*100),c=gc(p);
+    return `<div class="krow"><div class="kn">${i.name}</div><div class="kc"><span class="badge ${i.type==='نتيجة'?'teal':'blue'}">${i.type}</span></div><div class="kc">${fmt(i.target)}${i.unit}</div><div class="kc">${fmt(i.actual)}${i.unit}</div><div class="kpct ${c}">${p}%</div><div></div></div>`;
+  }).join("");
+}
+
+// ── AXES DETAIL ───────────────────────────────────────────────────────────────
+function openAxis(id){nav("axes",document.getElementById("nav-axes"));renderAxesDetail(id);}
+function renderAxesDetail(hl){
+  document.getElementById("axes-detail").innerHTML=AXES.map(a=>{
+    const s=axScore(a.id),c=gc(s);
+    const rows=IND.filter(i=>i.axis===a.id).map(i=>{
+      const p=Math.round(i.actual/i.target*100),ic=gc(p);
+      return `<div class="krow"><div class="kn">${i.name}</div><div class="kc"><span class="badge ${i.type==='نتيجة'?'teal':'blue'}">${i.type}</span></div><div class="kc">${fmt(i.target)}${i.unit}</div><div class="kc">${fmt(i.actual)}${i.unit}</div><div class="kpct ${ic}">${p}%</div><div></div></div>`;
+    }).join()||`<div class="krow"><div style="color:var(--tx3);font-size:12px;">لا توجد مؤشرات</div></div>`;
+    return `<div style="margin-bottom:18px;${hl===a.id?'outline:2px solid var(--teal-mid);border-radius:14px;padding:2px;':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:14px;font-weight:500;color:var(--tx);">${a.name}</div>
+        <span class="badge ${c}">${s}% · ${gl(s)}</span>
+      </div>
+      <div class="ktable"><div class="khdr"><div>المؤشر</div><div class="kc">النوع</div><div class="kc">الهدف</div><div class="kc">الفعلي</div><div class="kc">التحقق</div><div></div></div>${rows}</div>
+    </div>`;
+  }).join("");
+}
+
+// ── ENTRY ─────────────────────────────────────────────────────────────────────
+function loadEntryFields(){
+  const ai=parseInt(document.getElementById("entry-axis").value);
+  const inds=IND.filter(i=>i.axis===ai);
+  document.getElementById("entry-fields").innerHTML=inds.map(i=>`
+    <div class="eind">
+      <div class="eind-n">${i.name}</div>
+      <div class="eind-m">النوع: ${i.type} · الوحدة: ${i.unit||"عدد"} · الهدف: ${fmt(i.target)}${i.unit}</div>
+      <input class="finp" type="number" min="0" placeholder="القيمة الفعلية...">
+    </div>`).join()||`<div style="color:var(--tx3);font-size:13px;padding:10px 0;">لا توجد مؤشرات لهذا المحور</div>`;
+}
+function saveEntry(){
+  const inp=document.querySelectorAll("#entry-fields input[type=number]");
+  if([...inp].some(i=>!i.value)){toast("يرجى إدخال جميع القيم");return;}
+  toast("تم حفظ البيانات بنجاح ✓");
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+function renderReports(){
+  fillYearSels();
+  document.getElementById("reports-list").innerHTML=RPTS.map(r=>`
+    <div class="ritem"><div><div class="t">${r.title}</div><div class="s">${r.date} · PDF · ${r.pages} صفحات</div></div>
+    <button class="btn-o" onclick="toast('جاري التحميل...')">⬇ تحميل</button></div>`).join("");
+}
+function generateReport(){toast("جاري إعداد التقرير...");setTimeout(()=>window.print(),800);}
+
+// ── SETTINGS: YEARS ──────────────────────────────────────────────────────────
+function renderYears(){
+  document.getElementById("years-list").innerHTML=[...YEARS].sort((a,b)=>b-a).map(y=>`
+    <div class="ychip${y===CUR_YEAR?' cur':''}">
+      <span class="yv">${y}${y===CUR_YEAR?' ★':''}</span>
+      ${y!==CUR_YEAR?`<button class="ydel" onclick="delYearConfirm(${y})" title="حذف">×</button>`:''}
+    </div>`).join("");
+  const sel=document.getElementById("cur-year-sel");
+  if(sel){sel.innerHTML=[...YEARS].reverse().map(y=>`<option value="${y}"${y===CUR_YEAR?' selected':''}>${y}</option>`).join("");}
+}
+function setCurYear(v){CUR_YEAR=parseInt(v);renderYears();fillYearSels();toast(`تم تعيين ${v} كالسنة الحالية`);}
+function openAddYear(){
+  document.getElementById("new-year-val").value="";
+  fillYearSels();
+  document.getElementById("modal-year").classList.add("open");
+}
+function confirmAddYear(){
+  const y=parseInt(document.getElementById("new-year-val").value);
+  if(!y||y<2000||y>2050){toast("أدخل سنة صحيحة");return;}
+  if(YEARS.includes(y)){toast("هذه السنة موجودة مسبقاً");return;}
+  YEARS.push(y);YEARS.sort((a,b)=>a-b);
+  fillYearSels();renderYears();closeModal("modal-year");
+  toast(`تمت إضافة سنة ${y} ✓`);
+}
+function delYearConfirm(y){
+  confirm2(`حذف سنة ${y}`,`هل تريد حذف سنة ${y} من قائمة السنوات؟ لن تُحذف البيانات.`,()=>{
+    YEARS=YEARS.filter(x=>x!==y);fillYearSels();renderYears();toast(`تم حذف سنة ${y}`);
+  });
+}
+
+// ── SETTINGS: INDICATORS ─────────────────────────────────────────────────────
+function renderIndManager(){
+  const ax=parseInt(document.getElementById("ind-filter").value);
+  const list=ax===-1?IND:IND.filter(i=>i.axis===ax);
+  document.getElementById("ind-rows").innerHTML=list.map(i=>`
+    <div class="ind-row">
+      <div style="color:var(--tx);">${i.name}${i.def?`<span class="def-tag">افتراضي</span>`:''}</div>
+      <div class="kc" style="font-size:11px;color:var(--tx2);">${shortAxis(i.axis)}</div>
+      <div class="kc"><span class="badge ${i.type==='نتيجة'?'teal':'blue'}">${i.type}</span></div>
+      <div class="kc" style="font-size:12px;">${fmt(i.target)}${i.unit}</div>
+      <div class="kc"><span class="badge gray">فعّال</span></div>
+      <div class="kc">${i.def?`<span style="color:var(--tx3);font-size:18px;" title="مؤشر افتراضي محمي">🔒</span>`:`<button class="btn-del" onclick="delIndConfirm(${i.id})">حذف</button>`}</div>
+    </div>`).join()||`<div style="padding:16px;color:var(--tx3);font-size:13px;">لا توجد مؤشرات</div>`;
+}
+function openAddIndicator(){
+  ["ni-name","ni-target","ni-unit","ni-desc"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("modal-ind").classList.add("open");
+}
+function confirmAddIndicator(){
+  const name=document.getElementById("ni-name").value.trim();
+  const target=parseFloat(document.getElementById("ni-target").value);
+  if(!name){toast("يرجى إدخال اسم المؤشر");return;}
+  if(!target||target<=0){toast("يرجى إدخال هدف صحيح");return;}
+  IND.push({
+    id:nextId++,name,
+    axis:parseInt(document.getElementById("ni-axis").value),
+    type:document.getElementById("ni-type").value,
+    target,actual:0,
+    unit:document.getElementById("ni-unit").value.trim(),
+    def:false
+  });
+  renderIndManager();renderDashboard();closeModal("modal-ind");
+  toast(`تمت إضافة "${name}" ✓`);
+}
+function delIndConfirm(id){
+  const i=IND.find(x=>x.id===id);if(!i)return;
+  confirm2("حذف المؤشر",`سيتم حذف "${i.name}" نهائياً.`,()=>{
+    IND=IND.filter(x=>x.id!==id);renderIndManager();renderDashboard();toast("تم حذف المؤشر");
+  });
+}
+
+// ── NAV & MODALS ──────────────────────────────────────────────────────────────
+function nav(id,el){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
+  document.getElementById("view-"+id).classList.add("active");
+  el.classList.add("active");closeSidebar();
+  if(id==="axes")renderAxesDetail();
+  if(id==="settings"){renderYears();renderIndManager();fillYearSels();}
+  if(id==="reports")renderReports();
+}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+document.querySelectorAll(".modal-ov").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open");}));
+function confirm2(title,msg,cb){
+  document.getElementById("confirm-title").textContent=title;
+  document.getElementById("confirm-msg").textContent=msg;
+  document.getElementById("confirm-ok").onclick=()=>{closeModal("modal-confirm");cb();};
+  document.getElementById("modal-confirm").classList.add("open");
+}
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("ov").classList.toggle("show");}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("ov").classList.remove("show");}
+let toastT;
+function toast(m){const e=document.getElementById("toast-el");e.textContent=m;e.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove("show"),2800);}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+fillYearSels();
+renderDashboard();
+loadEntryFields();
+</script>
+</body>
+</html>
